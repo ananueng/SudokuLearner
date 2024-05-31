@@ -37,6 +37,7 @@ public:
 
     void Dump();
     void FullDump();
+    void CombinedDump();
 
 
 

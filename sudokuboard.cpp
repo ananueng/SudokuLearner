@@ -136,7 +136,8 @@ bool SudokuBoard::Solve()
     state = GetBoardState();
 
     Log("\n");
-    Dump();
+    Log("Starting scans number - %d", scancount);
+    CombinedDump();
     Log("\n");
 
     while(true)
@@ -147,7 +148,8 @@ bool SudokuBoard::Solve()
         state = GetBoardState();
 
         Log("\n");
-        Dump();
+        Log("Starting scans number - %d", scancount);
+        CombinedDump();
         Log("\n");
 
         if (state == oldstate)
@@ -396,7 +398,7 @@ void SudokuBoard::ScanForSolution()
         DoNumberClaiming(&m_squares[index]);
     }
 
-    //FullDump();
+    // CombinedDump();
     DoXWingSets(m_cols);
     DoXWingSets(m_rows);
 }
@@ -420,6 +422,7 @@ int SudokuBoard::SimpleEliminate(Cell *cell, CellSet *set)
         value = Cell::GetCellValueFromBitmask(cell->_bitmask);
         SetCellValue(cell->_rowIndex, cell->_colIndex, value);
         LogWithoutLineBreak("SimpleEliminate - Single Bit match.  Setting %d for (r=%d c=%d)\n", value, cell->_rowIndex, cell->_colIndex);
+        CombinedDump();
         return value;
     }
 
@@ -450,6 +453,7 @@ int SudokuBoard::SimpleEliminate(Cell *cell, CellSet *set)
         const char *psz = g_relationship_name[relate];
 
         Log("SimpleEliminate - setting value of %d at (r=%d c=%d) [%s elimination]", value, cell->_rowIndex, cell->_colIndex, psz);
+        CombinedDump();
     }
 
     return value;
@@ -535,6 +539,7 @@ int SudokuBoard::BoxLineReduction(CellSet *set)
                 {
                     Log("BoxLineReduced %d from cell(r=%d c=%d)", valueindex, cell->_rowIndex, cell->_colIndex);
                     reducecount++;
+                    CombinedDump();
                 }
             }
         }
@@ -565,6 +570,8 @@ int SudokuBoard::ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set)
 
                 cell->ClearValueFromMask(value);
                 count++;
+                CombinedDump();
+                // TODO: check this
             }
         }
 
@@ -574,6 +581,7 @@ int SudokuBoard::ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set)
     return count;
 }
 
+// X Wing?
 int SudokuBoard::DoNumberClaiming(CellSet *square)
 {
     int count  = 0;
@@ -643,6 +651,7 @@ int SudokuBoard::DoNumberClaiming(CellSet *square)
     return count;
 }
 
+// Naked Pair
 int SudokuBoard::PairSearch(Cell *cell, CellSet *set)
 {
     // scan the entire set.  If a pair of cells are found whereby both have the same bitmask of two
@@ -707,6 +716,7 @@ int SudokuBoard::PairSearch(Cell *cell, CellSet *set)
             {
                 Log("PairSearch - %d removed from cell at (r=%d c=%d)", values[x], othercell->_rowIndex, othercell->_colIndex);
                 othercell->ClearValueFromMask(values[x]);
+                CombinedDump();
             }
         }
     }
@@ -805,6 +815,7 @@ int SudokuBoard::TripleSearch(Cell *cell, CellSet *set)
                 {
                     othercell->ClearValueFromMask(value);
                     Log("TripleSearch - %d removed from cell at (r=%d c=%d)", value, othercell->_rowIndex, othercell->_colIndex);
+                    CombinedDump();
                 }
             }
         }
@@ -894,6 +905,7 @@ int SudokuBoard::DoXWingSets(CellSet *sets)
     return changecount;
 }
 
+// 
 bool SudokuBoard::XWing_FindColumnIndices(CellSet *row, int value, int &col1, int &col2)
 {
     col1 = -1;
@@ -922,6 +934,7 @@ bool SudokuBoard::XWing_FindColumnIndices(CellSet *row, int value, int &col1, in
     return true;
 }
 
+// Remove values that are identified from x-wing
 int SudokuBoard::XWing_DoFilter(CellSet *sets, CellSet *firstrow, CellSet *matchrow, int value, int col1, int col2)
 {
     int changecount = 0;
@@ -962,6 +975,7 @@ int SudokuBoard::XWing_DoFilter(CellSet *sets, CellSet *firstrow, CellSet *match
 
                 cells[x]->ClearValueFromMask(value);
                 changecount++;
+                CombinedDump();
             }
         }
     }
@@ -993,6 +1007,7 @@ void SudokuBoard::Dump()
         }
            
     }
+    // TODO: add prints for candidates
 }
 
 void SudokuBoard::FullDump()
@@ -1045,5 +1060,66 @@ void SudokuBoard::FullDump()
     }
 }
 
+void SudokuBoard::CombinedDump()
+{
+    int value;
+    int count;
 
+    for (int row = 0; row < 9; row++)
+    {
+        // Print the standard board on the left
+        for (int col = 0; col < 9; col++)
+        {
+            LogWithoutLineBreak("%c ", m_board[row][col]._value ? (m_board[row][col]._value + '0') : '?');
+
+            if ((col % 3 == 2) && (col != 8))
+                LogWithoutLineBreak("| ");
+        }
+
+        // Add separator between the two boards
+        LogWithoutLineBreak("\t||\t");
+
+        // Print the full board with candidates on the right
+        for (int col = 0; col < 9; col++)
+        {
+            value = m_board[row][col]._value;
+            if (value != 0)
+            {
+                LogWithoutLineBreak("%c      ", value + '0');
+            }
+            else
+            {
+                LogWithoutLineBreak("{");
+                uint16_t wMask = m_board[row][col]._bitmask;
+                count = 0;
+                while (wMask)
+                {
+                    value = Cell::GetCellValueFromBitmaskAndClear(wMask);
+                    LogWithoutLineBreak("%c", value + '0');
+                    count++;
+                }
+
+                int remainingspaces = 5 - count;
+                LogWithoutLineBreak("}");
+                while (remainingspaces > 0)
+                {
+                    LogWithoutLineBreak(" ");
+                    remainingspaces--;
+                }
+            }
+
+            if ((col % 3 == 2) && (col != 8))
+                LogWithoutLineBreak("| ");
+        }
+
+        // Newline after each row
+        Log("");
+
+        // Print separator lines after each 3rd row
+        if (row % 3 == 2)
+        {
+            Log("---------------------\t||\t------------------------------------------------------------------");
+        }
+    }
+}
 
