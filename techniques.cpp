@@ -164,12 +164,11 @@ int SudokuBoard::ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set) {
             if ((cell->_square != square) && (cell->_value == 0)) {
                 if (cell->IsOkToSetValue(value)) {
                     Log("D2: Number Claiming - removing %d from candidate list of cell at (r=%d c=%d)", value, cell->_rowIndex, cell->_colIndex);
+                    // TODO: check this
+                    cell->ClearValueFromMask(value);
+                    CombinedDump();
+                    count++;
                 }
-
-                cell->ClearValueFromMask(value);
-                count++;
-                CombinedDump();
-                // TODO: check this
             }
         }
 
@@ -293,13 +292,13 @@ int SudokuBoard::NakedPair(Cell *cell, CellSet *set) {
         for (int x = 0; x < 2; x++) {
             if (othercell->IsOkToSetValue(values[x])) {
                 // Log("NakedPair - %d removed from cell at (r=%d c=%d)", values[x], othercell->_rowIndex, othercell->_colIndex);
+                othercell->ClearValueFromMask(values[x]);
                 Log("D2: NakedPair - (r=%d c=%d): {%s}, (r=%d c=%d): {%s}. Removed %d from cell at (r=%d c=%d)",
                         cell->_rowIndex, cell->_colIndex, cell->BitmaskToString().c_str(),
                         matchcell->_rowIndex, matchcell->_colIndex, matchcell->BitmaskToString().c_str(),
                         values[x], othercell->_rowIndex, othercell->_colIndex);
-                othercell->ClearValueFromMask(values[x]);
-                progress = true;
                 CombinedDump();
+                progress = true;
             }
         }
     }

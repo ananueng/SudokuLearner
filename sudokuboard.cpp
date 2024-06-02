@@ -324,13 +324,13 @@ void SudokuBoard::ScanForSolution() {
             }
         }
         for (int index = 0; index < 9; index++) {
+            if (DoNumberClaiming(&m_squares[index]) != 0) {return;}
+        }
+        for (int index = 0; index < 9; index++) {
             if (BoxLineReduction(&m_rows[index]) != 0) {return;}
             if (BoxLineReduction(&m_cols[index]) != 0) {return;}
         }
         
-        for (int index = 0; index < 9; index++) {
-            if (DoNumberClaiming(&m_squares[index]) != 0) {return;}
-        }
 
 
         // attempt advanced techniques
