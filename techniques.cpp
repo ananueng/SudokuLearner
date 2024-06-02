@@ -180,7 +180,7 @@ int SudokuBoard::ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set) {
 }
 
 int SudokuBoard::DoNumberClaiming(CellSet *square) {
-    int count  = 0;
+    int count = 0;
     uint16_t maskPerRow[3] ={0};
     uint16_t maskPerCol[3] = {0};
     uint16_t wMaskRow;

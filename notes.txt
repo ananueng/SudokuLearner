@@ -9,3 +9,17 @@ Swordfish
 Forcing Chains
 Nishio
 Guesswork
+
+  // CandidateLines (BoxClaim)
+    // if a candidate value appears in only 1 row/column of a square, then it can be eliminated from the candidate
+    // lists of the cells in the same row/column outside the square
+    int CandidateLines(CellSet *set);
+    int ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set);
+
+
+    // MultipleLines (Row/ColClaim)
+    // takes a row or column set as a parameter
+    // This function will determine what values are missing from this row or column.
+    // For each missing value in "set", it will detemine if all the candidate cells for this value lie in the same box.
+    // If so, it will remove the value from the candidate list of cells in THIS SQUARE that do not belong to this set (row/column)
+    int MultipleLines(CellSet *set); // set must not be a square - rows or columns only

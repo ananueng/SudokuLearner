@@ -324,14 +324,14 @@ void SudokuBoard::ScanForSolution() {
             }
         }
         for (int index = 0; index < 9; index++) {
-            BoxLineReduction(&m_rows[index]);
-            BoxLineReduction(&m_cols[index]);
+            if (BoxLineReduction(&m_rows[index]) != 0) {return;}
+            if (BoxLineReduction(&m_cols[index]) != 0) {return;}
         }
-
-
+        
         for (int index = 0; index < 9; index++) {
-            DoNumberClaiming(&m_squares[index]);
+            if (DoNumberClaiming(&m_squares[index]) != 0) {return;}
         }
+
 
         // attempt advanced techniques
         // CombinedDump();
