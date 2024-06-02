@@ -1,0 +1,11 @@
+Single Candidate
+Candidate Lines
+Double Pairs
+Multiple Lines
+Naked Pairs / Triples
+Hidden Pairs / Triples
+X-Wings
+Swordfish
+Forcing Chains
+Nishio
+Guesswork

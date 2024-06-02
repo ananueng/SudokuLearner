@@ -38,6 +38,8 @@ public:
     void Dump();
     void FullDump();
     void CombinedDump();
+    std::string BitmaskToString(uint16_t bitmask);
+
 
 
 
@@ -59,18 +61,18 @@ protected:
 
     // the following are individual algorithms for solving
 
-    // SimpleEliminate will look at the sell within the specified set.  If only one bit is set in the candidate list of the cell
+    // SingleCandidate will look at the sell within the specified set.  If only one bit is set in the candidate list of the cell
     // or contains a candidate value that doesn't appear anywhere else in the set, then that value gets assigned to the cell
-    int SimpleEliminate(Cell *cell, CellSet *set);
+    int SingleCandidate(Cell *cell, CellSet *set);
 
-    // PairSearch will evaluate "cell" if it only has two candidate values.  If it does, it will try to find another cell
+    // NakedPair will evaluate "cell" if it only has two candidate values.  If it does, it will try to find another cell
     // in "set" that has the same pair of candidate values.  If it finds a match, the seven other cells in "set" have the two candidate
     // values removed
-    int PairSearch(Cell *cell, CellSet *set);
+    int NakedPair(Cell *cell, CellSet *set);
 
 
-    // TripleSearch works just like PairSearch except it looks for 3 candidate values across three sells in the same set
-    int TripleSearch(Cell *cell, CellSet *set);
+    // NakedTriple works just like NakedPair except it looks for 3 candidate values across three sells in the same set
+    int NakedTriple(Cell *cell, CellSet *set);
 
 
     // BoxLineReduction takes a row or column set as a parameter

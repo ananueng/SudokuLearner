@@ -1,7 +1,7 @@
 CC=g++ -g -Wall -std=c++11
 
 # List of source files for your sudoku solver
-SOLVER_SOURCES=cell.cpp sudokuboard.cpp main.cpp
+SOLVER_SOURCES=cell.cpp sudokuboard.cpp techniques.cpp utility.cpp main.cpp
 
 # Generate the names of the disk solver's object files
 SOLVER_OBJS=${SOLVER_SOURCES:.cpp=.o}

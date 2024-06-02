@@ -53,8 +53,8 @@ if the board is solved.
 ? ? 2 | 4 ? 1 | 6 ? 3
 ---------------------
 
-TripleSearch - 2 removed from cell at (r=7 c=5)
-TripleSearch - 6 removed from cell at (r=7 c=5)
+NakedTriple - 2 removed from cell at (r=7 c=5)
+NakedTriple - 6 removed from cell at (r=7 c=5)
 ...
 
 9 4 6 | 3 7 5 | 1 8 2

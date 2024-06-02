@@ -71,6 +71,7 @@ struct Cell
 
     CELL_RELATIONSHIP GetRelationship(CellSet *set);
 
+    std::string BitmaskToString();
 };
 
 // a CellSet is a row, square, or column

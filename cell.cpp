@@ -223,3 +223,25 @@ CELL_RELATIONSHIP Cell::GetRelationship(CellSet *cellset)
 
     return CELL_NONE;
 };
+
+std::string Cell::BitmaskToString() {
+    std::string result;
+    int value;
+    int count = 0;
+    uint16_t temp_bitmask = _bitmask;
+
+    while (temp_bitmask) {
+        value = Cell::GetCellValueFromBitmaskAndClear(temp_bitmask);
+        result += std::to_string(value);
+        count++;
+    }
+
+    // // Add remaining spaces
+    // int remainingSpaces = 9 - count;
+    // while (remainingSpaces > 0) {
+    //     result += " ";
+    //     remainingSpaces--;
+    // }
+
+    return result;
+}

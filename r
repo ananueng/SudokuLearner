@@ -19,6 +19,7 @@ case $1 in
     output_folder="output/$current_time"
     mkdir -p "$output_folder"
     # log="$output_folder/log.tsv"
+    cp ./input.txt $output_folder/input.in
     ./solver input.txt > $output_folder/input.out
 
     ;;
