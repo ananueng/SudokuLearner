@@ -8,23 +8,18 @@ set -Eeuo pipefail
 usage() {
   echo "Usage: $0 (all|fs|test (n)|debug (n)|clean)"
 }
+if [ $# -ne 1 ]; then
+  usage
+  exit
+fi
 
-# Parse argument.  $1 is the first argument
-case $1 in
-  "input")
-    make clean
-    make
+make clean
+make
 
-    current_time=$(date +"%m-%d_%I:%M_%p")
-    output_folder="output/$current_time"
-    mkdir -p "$output_folder"
-    # log="$output_folder/log.tsv"
-    cp ./input.txt $output_folder/input.in
-    ./solver input.txt > $output_folder/input.out
+current_time=$(date +"%m-%d_%I:%M_%p")
+output_folder="output/$current_time"
+mkdir -p "$output_folder"
+# log="$output_folder/log.tsv"
+cp ./$1.txt $output_folder/$1.in
+./solver $1.txt > $output_folder/$1.out
 
-    ;;
-  *)
-    usage
-    exit 1
-    ;;
-esac

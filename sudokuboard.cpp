@@ -270,54 +270,74 @@ void SudokuBoard::SetCellValue(Cell *cell, int value, bool fPerm) {
 
 void SudokuBoard::ScanForSolution() {
     // this function is the main loop that looks for a solution
-    int value = 0;
+    bool progress = false;
 
     for (int r = 0; r < 9; r++) {
         for (int c = 0; c < 9; c++) {
+            int filled = 0;
             Cell *cell = &m_board[r][c];
 
             if (cell->_value != 0) {  // cell is already solved
                 continue;
             }
 
-            value = SingleCandidate(cell, cell->_square);
-            if (value == 0) {
-                value = SingleCandidate(cell, cell->_row);
+            // try to fill the cell
+            filled = LastCandidate(cell);
+            
+            if (filled == 0) {
+                filled = SingleCandidate(cell, cell->_square);
             }
-            if (value == 0) {
-                value = SingleCandidate(cell, cell->_column);
+            if (filled == 0) {
+                filled = SingleCandidate(cell, cell->_row);
+            }
+            if (filled == 0) {
+                filled = SingleCandidate(cell, cell->_column);
             }
 
-            if (value != 0) {
-                // cell has been solved, don't use advanced techniques
-                continue;
+            if (filled != 0) {
+                progress = true;
             }
 
-            NakedPair(cell, cell->_square);
-            NakedPair(cell, cell->_row);
-            NakedPair(cell, cell->_column);
-
-            NakedTriple(cell, cell->_square);
-            NakedTriple(cell, cell->_row);
-            NakedTriple(cell, cell->_column);
-
+            // if (value != 0) {
+            //     // cell has been solved, don't use advanced techniques
+            //     continue;
+            // }
         }
     }
 
+    if (progress == false) {
+        // attempt moderate techniques
+        for (int r = 0; r < 9; r++) {
+            for (int c = 0; c < 9; c++) {
+                Cell *cell = &m_board[r][c];
+                // TODO: PointingPair/Triple (or Candidate Lines)
+                // TODO: Double Pairs
+                // TODO: Multiple Lines
+                // Naked is roughly same as hidden, ignore for now
+                if (NakedPair(cell, cell->_square) != 0) {return;}
+                if (NakedPair(cell, cell->_row) != 0) {return;}
+                if (NakedPair(cell, cell->_column) != 0) {return;}
 
-    for (int index = 0; index < 9; index++) {
-        BoxLineReduction(&m_rows[index]);
-        BoxLineReduction(&m_cols[index]);
+                if (NakedTriple(cell, cell->_square) != 0) {return;}
+                if (NakedTriple(cell, cell->_row) != 0) {return;}
+                if (NakedTriple(cell, cell->_column) != 0) {return;}
+            }
+        }
+        for (int index = 0; index < 9; index++) {
+            BoxLineReduction(&m_rows[index]);
+            BoxLineReduction(&m_cols[index]);
+        }
+
+
+        for (int index = 0; index < 9; index++) {
+            DoNumberClaiming(&m_squares[index]);
+        }
+
+        // attempt advanced techniques
+        // CombinedDump();
+        DoXWingSets(m_cols);
+        DoXWingSets(m_rows);
     }
-
-
-    for (int index = 0; index < 9; index++) {
-        DoNumberClaiming(&m_squares[index]);
-    }
-
-    // CombinedDump();
-    DoXWingSets(m_cols);
-    DoXWingSets(m_rows);
 }
 
 // void SudokuBoard::ScanForSolution() {

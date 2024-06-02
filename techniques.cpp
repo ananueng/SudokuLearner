@@ -2,25 +2,47 @@
 #include "sudokuboard.h"
 #include "cell.h"
 
-// SingleCandidate looks at the non-eliminated values at "cell" and compares it to all the
-// other non-eliminated values from the {square,row,column} set.  If a non-eliminated value appears only once,
-// then it will set set that value and update the candidates in the other sets
-int SudokuBoard::SingleCandidate(Cell *cell, CellSet *set) {
-    uint16_t wOtherMask = 0;
+int SudokuBoard::LastCandidate(Cell *cell) {
+    // only called when cell value == 0 (unsolved)
+    assert(cell->_value == 0);
     int value = 0;
-
-    if (cell->_value != 0) {
-        return 0;
-    }
+    // if (cell->_value != 0) {
+    //     return 0;
+    // }
 
     if (Cell::BitCount(cell->_bitmask) == 1) {
         // all other values have been eliminated for this cell, it must be "the one"
         value = Cell::GetCellValueFromBitmask(cell->_bitmask);
         SetCellValue(cell->_rowIndex, cell->_colIndex, value);
-        LogWithoutLineBreak("LastCandidate - setting value of %d at (r=%d c=%d)\n", value, cell->_rowIndex, cell->_colIndex);
+        LogWithoutLineBreak("D1: LastCandidate - setting value of %d at (r=%d c=%d)\n", value, cell->_rowIndex, cell->_colIndex);
         CombinedDump();
-        return value;
+        return 1;
     }
+
+    // no progress
+    return 0;
+}
+
+// SingleCandidate looks at the non-eliminated values at "cell" and compares it to all the
+// other non-eliminated values from the {square,row,column} set.  If a non-eliminated value appears only once,
+// then it will set set that value and update the candidates in the other sets
+int SudokuBoard::SingleCandidate(Cell *cell, CellSet *set) {
+    assert(cell->_value == 0);
+    uint16_t wOtherMask = 0;
+    int value = 0;
+
+    // if (cell->_value != 0) {
+    //     return 1;
+    // }
+
+    // if (Cell::BitCount(cell->_bitmask) == 1) {
+    //     // all other values have been eliminated for this cell, it must be "the one"
+    //     value = Cell::GetCellValueFromBitmask(cell->_bitmask);
+    //     SetCellValue(cell->_rowIndex, cell->_colIndex, value);
+    //     LogWithoutLineBreak("LastCandidate - setting value of %d at (r=%d c=%d)\n", value, cell->_rowIndex, cell->_colIndex);
+    //     CombinedDump();
+    //     return value;
+    // }
 
 
     for (int index = 0; index < 9; index++) {
@@ -45,11 +67,13 @@ int SudokuBoard::SingleCandidate(Cell *cell, CellSet *set) {
 
         const char *psz = g_relationship_name[relate];
 
-        Log("SingleCandidate - setting value of %d at (r=%d c=%d) [%s elimination]", value, cell->_rowIndex, cell->_colIndex, psz);
+        Log("D1: SingleCandidate - setting value of %d at (r=%d c=%d) [%s elimination]", value, cell->_rowIndex, cell->_colIndex, psz);
         CombinedDump();
+        return 2;
     }
 
-    return value;
+    // no progress
+    return 0;
 }
 
 int SudokuBoard::BoxLineReduction(CellSet *set) {
@@ -116,7 +140,7 @@ int SudokuBoard::BoxLineReduction(CellSet *set) {
 
                 // another cell in the same square that doesn't belong to "set", remove valueindex from the bitmask
                 if (cell->ClearValueFromMask(valueindex)) {
-                    Log("BoxLineReduced %d from cell(r=%d c=%d)", valueindex, cell->_rowIndex, cell->_colIndex);
+                    Log("D2: BoxLineReduced %d from cell(r=%d c=%d)", valueindex, cell->_rowIndex, cell->_colIndex);
                     reducecount++;
                     CombinedDump();
                 }
@@ -139,7 +163,7 @@ int SudokuBoard::ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set) {
             Cell *cell = set->_set[index];
             if ((cell->_square != square) && (cell->_value == 0)) {
                 if (cell->IsOkToSetValue(value)) {
-                    Log("Number Claiming - removing %d from candidate list of cell at (r=%d c=%d)", value, cell->_rowIndex, cell->_colIndex);
+                    Log("D2: Number Claiming - removing %d from candidate list of cell at (r=%d c=%d)", value, cell->_rowIndex, cell->_colIndex);
                 }
 
                 cell->ClearValueFromMask(value);
@@ -219,6 +243,7 @@ int SudokuBoard::NakedPair(Cell *cell, CellSet *set) {
     // candidate values, then those candidate values can be erased from the rest of the cells in the set
 
     Cell *matchcell = NULL;
+    bool progress = false;
 
     if (cell->_value != 0)
         return 0;
@@ -268,22 +293,24 @@ int SudokuBoard::NakedPair(Cell *cell, CellSet *set) {
         for (int x = 0; x < 2; x++) {
             if (othercell->IsOkToSetValue(values[x])) {
                 // Log("NakedPair - %d removed from cell at (r=%d c=%d)", values[x], othercell->_rowIndex, othercell->_colIndex);
-                Log("NakedPair - (r=%d c=%d): {%s}, (r=%d c=%d): {%s}. Removed %d from cell at (r=%d c=%d)",
+                Log("D2: NakedPair - (r=%d c=%d): {%s}, (r=%d c=%d): {%s}. Removed %d from cell at (r=%d c=%d)",
                         cell->_rowIndex, cell->_colIndex, cell->BitmaskToString().c_str(),
                         matchcell->_rowIndex, matchcell->_colIndex, matchcell->BitmaskToString().c_str(),
                         values[x], othercell->_rowIndex, othercell->_colIndex);
                 othercell->ClearValueFromMask(values[x]);
+                progress = true;
                 CombinedDump();
             }
         }
     }
 
-    return 0;
+    return progress ? 1 : 0;
 }
 
 int SudokuBoard::NakedTriple(Cell *cell, CellSet *set) {
     uint16_t wUnion;
     int value;
+    bool progress = false;
 
     if(cell->_value != 0) {
         return 0;
@@ -361,18 +388,19 @@ int SudokuBoard::NakedTriple(Cell *cell, CellSet *set) {
                 if (othercell->IsOkToSetValue(value)) {
                     othercell->ClearValueFromMask(value);
                     // Log("NakedTriple - %d removed from cell at (r=%d c=%d)", value, othercell->_rowIndex, othercell->_colIndex);
-                    Log("NakedTriple - (r=%d c=%d): {%s}, (r=%d c=%d): {%s}, (r=%d c=%d): {%s}. Removed %d from cell at (r=%d c=%d)",
+                    Log("D2.5: NakedTriple - (r=%d c=%d): {%s}, (r=%d c=%d): {%s}, (r=%d c=%d): {%s}. Removed %d from cell at (r=%d c=%d)",
                         cell->_rowIndex, cell->_colIndex, cell->BitmaskToString().c_str(),
                         matches[0]->_rowIndex, matches[0]->_colIndex, matches[0]->BitmaskToString().c_str(),
                         matches[1]->_rowIndex, matches[1]->_colIndex, matches[1]->BitmaskToString().c_str(),
                         value, othercell->_rowIndex, othercell->_colIndex);
                     CombinedDump();
+                    progress = true;
                 }
             }
         }
     }
 
-    return 0;
+    return progress ? 1 : 0;
 }
 
 
@@ -491,7 +519,7 @@ int SudokuBoard::XWing_DoFilter(CellSet *sets, CellSet *firstrow, CellSet *match
 
         for (int x = 0; x < 2; x++) {
             if (cells[x]->IsOkToSetValue(value)) {
-                Log("XWing - removing %d from cell at (r=%d c=%d)", value, cells[x]->_rowIndex, cells[x]->_colIndex);
+                Log("D3: XWing - removing %d from cell at (r=%d c=%d)", value, cells[x]->_rowIndex, cells[x]->_colIndex);
 
                 if (fUsingColumns == false) {
                     Log("   XWing cells are at (r=%d c=%d) (r=%d c=%d) (r=%d c=%d) (r=%d c=%d)", firstrow->_set[0]->_rowIndex, col1, firstrow->_set[0]->_rowIndex, col2, matchrow->_set[0]->_rowIndex, col1, matchrow->_set[0]->_rowIndex, col2);

@@ -61,6 +61,8 @@ protected:
 
     // the following are individual algorithms for solving
 
+    int LastCandidate(Cell *cell);
+
     // SingleCandidate will look at the sell within the specified set.  If only one bit is set in the candidate list of the cell
     // or contains a candidate value that doesn't appear anywhere else in the set, then that value gets assigned to the cell
     int SingleCandidate(Cell *cell, CellSet *set);
