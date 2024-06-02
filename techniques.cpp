@@ -76,12 +76,12 @@ int SudokuBoard::SingleCandidate(Cell *cell, CellSet *set) {
     return 0;
 }
 
-int SudokuBoard::BoxLineReduction(CellSet *set) {
+int SudokuBoard::MultipleLines(CellSet *set) {
 
     bool placed[10] = {0};
     Cell *cell = NULL;
     Cell *comparecell = NULL;
-    bool fCanDoBoxLineReduction;
+    bool fCanDoMultipleLines;
     int reducecount = 0;
     
     for (int cellindex = 0; cellindex < 9; cellindex++) {
@@ -90,7 +90,7 @@ int SudokuBoard::BoxLineReduction(CellSet *set) {
     }
 
     for (int valueindex = 1; valueindex <= 9; valueindex++) {
-        fCanDoBoxLineReduction = true;
+        fCanDoMultipleLines = true;
         comparecell = NULL;
 
         if (placed[valueindex] == true) {
@@ -115,7 +115,7 @@ int SudokuBoard::BoxLineReduction(CellSet *set) {
                 else {
                     if (comparecell->_square != cell->_square) {
                         // "index" appears in m_bitmask in cells across different boxes - time to skip
-                        fCanDoBoxLineReduction = false;
+                        fCanDoMultipleLines = false;
                         break;
                     }
                 }
@@ -124,7 +124,7 @@ int SudokuBoard::BoxLineReduction(CellSet *set) {
 
         cell = NULL;
 
-        if (comparecell && fCanDoBoxLineReduction) {
+        if (comparecell && fCanDoMultipleLines) {
             CellSet *square = comparecell->_square;
 
             // iterate over all the cells in the square that don't belong to "set" (row/column)
@@ -140,7 +140,7 @@ int SudokuBoard::BoxLineReduction(CellSet *set) {
 
                 // another cell in the same square that doesn't belong to "set", remove valueindex from the bitmask
                 if (cell->ClearValueFromMask(valueindex)) {
-                    Log("D2: BoxLineReduced %d from cell(r=%d c=%d)", valueindex, cell->_rowIndex, cell->_colIndex);
+                    Log("D2: MultipleLines - removing %d from cell at (r=%d c=%d)", valueindex, cell->_rowIndex, cell->_colIndex);
                     reducecount++;
                     CombinedDump();
                 }
@@ -151,7 +151,7 @@ int SudokuBoard::BoxLineReduction(CellSet *set) {
     return reducecount;
 }
 
-int SudokuBoard::ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set) {
+int SudokuBoard::DoCandidateLines(uint16_t mask, CellSet *square, CellSet *set) {
     // Remove all the values of "mask" from "set" that are not in "square"
 
     int value;
@@ -163,7 +163,7 @@ int SudokuBoard::ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set) {
             Cell *cell = set->_set[index];
             if ((cell->_square != square) && (cell->_value == 0)) {
                 if (cell->IsOkToSetValue(value)) {
-                    Log("D2: Number Claiming - removing %d from candidate list of cell at (r=%d c=%d)", value, cell->_rowIndex, cell->_colIndex);
+                    Log("D2: CandidateLines - removing %d from cell at (r=%d c=%d)", value, cell->_rowIndex, cell->_colIndex);
                     // TODO: check this
                     cell->ClearValueFromMask(value);
                     CombinedDump();
@@ -178,7 +178,7 @@ int SudokuBoard::ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set) {
     return count;
 }
 
-int SudokuBoard::DoNumberClaiming(CellSet *square) {
+int SudokuBoard::CandidateLines(CellSet *square) {
     int count = 0;
     uint16_t maskPerRow[3] ={0};
     uint16_t maskPerCol[3] = {0};
@@ -217,7 +217,7 @@ int SudokuBoard::DoNumberClaiming(CellSet *square) {
         if (wMaskedOut != 0) {
             Cell *refcell = square->_set[r*3];
             CellSet *row = refcell->_row;
-            count += ClaimNumbers(wMaskedOut, square, row);
+            count += DoCandidateLines(wMaskedOut, square, row);
         }
     }
 
@@ -229,7 +229,7 @@ int SudokuBoard::DoNumberClaiming(CellSet *square) {
         if (wMaskedOut != 0) {
             Cell *refcell = square->_set[c];
             CellSet *col = refcell->_column;
-            count += ClaimNumbers(wMaskedOut, square, col);
+            count += DoCandidateLines(wMaskedOut, square, col);
         }
     }
 

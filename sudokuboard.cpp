@@ -323,12 +323,14 @@ void SudokuBoard::ScanForSolution() {
                 if (NakedTriple(cell, cell->_column) != 0) {return;}
             }
         }
+        
         for (int index = 0; index < 9; index++) {
-            if (DoNumberClaiming(&m_squares[index]) != 0) {return;}
+            if (CandidateLines(&m_squares[index]) != 0) {return;}
         }
+
         for (int index = 0; index < 9; index++) {
-            if (BoxLineReduction(&m_rows[index]) != 0) {return;}
-            if (BoxLineReduction(&m_cols[index]) != 0) {return;}
+            if (MultipleLines(&m_rows[index]) != 0) {return;}
+            if (MultipleLines(&m_cols[index]) != 0) {return;}
         }
         
 
@@ -378,13 +380,13 @@ void SudokuBoard::ScanForSolution() {
 
 
 //     for (int index = 0; index < 9; index++) {
-//         BoxLineReduction(&m_rows[index]);
-//         BoxLineReduction(&m_cols[index]);
+//         MultipleLines(&m_rows[index]);
+//         MultipleLines(&m_cols[index]);
 //     }
 
 
 //     for (int index = 0; index < 9; index++) {
-//         DoNumberClaiming(&m_squares[index]);
+//         CandidateLines(&m_squares[index]);
 //     }
 
 //     // CombinedDump();

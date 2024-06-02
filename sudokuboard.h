@@ -76,19 +76,17 @@ protected:
     // NakedTriple works just like NakedPair except it looks for 3 candidate values across three sells in the same set
     int NakedTriple(Cell *cell, CellSet *set);
 
-
-    // BoxLineReduction takes a row or column set as a parameter
-    // This function will determine what values are missing from this row or column.
-    // For each missing value in "set", it will detemine if all the candidate cells for this value lie in the same box.
-    // If so, it will remove the value from the candidate list of cells in this SQUARE that do not belong to this set (row/column)
-    int BoxLineReduction(CellSet *set); // set must not be a square - rows or columns only
-
-
-    // DoNumberClaiming
+    // CandidateLines (BoxClaim)
     // if a candidate value appears in only 1 row/column of a square, then it can be eliminated from the candidate
     // lists of the cells in the same row/column outside the square
-    int DoNumberClaiming(CellSet *set);
-    int ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set);
+    int CandidateLines(CellSet *set);
+    int DoCandidateLines(uint16_t mask, CellSet *square, CellSet *set);
+    // MultipleLines (Row/ColClaim)
+    // takes a row or column set as a parameter
+    // This function will determine what values are missing from this row or column.
+    // For each missing value in "set", it will detemine if all the candidate cells for this value lie in the same box.
+    // If so, it will remove the value from the candidate list of cells in THIS SQUARE that do not belong to this set (row/column)
+    int MultipleLines(CellSet *set); // set must not be a square - rows or columns only
 
     // XWing pairs are tricky.  If a value appears in the candidate lists of exactly two cells of a given row and there is
     // another row with the two cells holding the candidate value in the same two columns, then other columns on other rows have this value eliminated

@@ -14,7 +14,7 @@ Guesswork
     // if a candidate value appears in only 1 row/column of a square, then it can be eliminated from the candidate
     // lists of the cells in the same row/column outside the square
     int CandidateLines(CellSet *set);
-    int ClaimNumbers(uint16_t mask, CellSet *square, CellSet *set);
+    int DoCandidateLines(uint16_t mask, CellSet *square, CellSet *set);
 
 
     // MultipleLines (Row/ColClaim)
