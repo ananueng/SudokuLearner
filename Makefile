@@ -1,4 +1,4 @@
-CC=g++ -g -Wall -std=c++11
+CC=g++ -g3 -Wall -std=c++11
 
 # List of source files for your sudoku solver
 SOLVER_SOURCES=cell.cpp sudokuboard.cpp techniques.cpp utility.cpp main.cpp

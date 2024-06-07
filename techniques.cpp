@@ -16,6 +16,7 @@ int SudokuBoard::LastCandidate(Cell *cell) {
         SetCellValue(cell->_rowIndex, cell->_colIndex, value);
         LogWithoutLineBreak("D1: LastCandidate - setting value of %d at (r=%d c=%d)\n", value, cell->_rowIndex, cell->_colIndex);
         CombinedDump();
+        numLastCandidate++;
         return 1;
     }
 
@@ -69,86 +70,12 @@ int SudokuBoard::SingleCandidate(Cell *cell, CellSet *set) {
 
         Log("D1: SingleCandidate - setting value of %d at (r=%d c=%d) [%s elimination]", value, cell->_rowIndex, cell->_colIndex, psz);
         CombinedDump();
+        numSingleCandidate++;
         return 2;
     }
 
     // no progress
     return 0;
-}
-
-int SudokuBoard::MultipleLines(CellSet *set) {
-
-    bool placed[10] = {0};
-    Cell *cell = NULL;
-    Cell *comparecell = NULL;
-    bool fCanDoMultipleLines;
-    int reducecount = 0;
-    
-    for (int cellindex = 0; cellindex < 9; cellindex++) {
-        int value = set->_set[cellindex]->_value;
-        placed[value] = true;  // value[0] is irrelevant
-    }
-
-    for (int valueindex = 1; valueindex <= 9; valueindex++) {
-        fCanDoMultipleLines = true;
-        comparecell = NULL;
-
-        if (placed[valueindex] == true) {
-            continue;
-        }
-
-        // look at all the cells in this set that have index in the candidate list.   If all the cells of this set appear
-        // in the same box, we can do boxline reduction
-
-        for (uint16_t cellindex = 0; cellindex < 9; cellindex++) {
-            cell = set->_set[cellindex];
-
-            if (cell->_value != 0) {
-                continue;
-            }
-
-            if (cell->IsOkToSetValue(valueindex)) {
-                // we found a cell that contains a missing value for this set it it's candidate list
-                if (comparecell == NULL) {
-                    comparecell = cell;
-                }
-                else {
-                    if (comparecell->_square != cell->_square) {
-                        // "index" appears in m_bitmask in cells across different boxes - time to skip
-                        fCanDoMultipleLines = false;
-                        break;
-                    }
-                }
-            }
-        }
-
-        cell = NULL;
-
-        if (comparecell && fCanDoMultipleLines) {
-            CellSet *square = comparecell->_square;
-
-            // iterate over all the cells in the square that don't belong to "set" (row/column)
-            for (uint16_t cellindex = 0; cellindex < 9; cellindex++) {
-                cell = square->_set[cellindex];
-                if  ((cell->_row == set) || (cell->_column == set)) {
-                    continue;
-                }
-
-                assert(cell != comparecell);
-
-                assert(cell->_value != valueindex);
-
-                // another cell in the same square that doesn't belong to "set", remove valueindex from the bitmask
-                if (cell->ClearValueFromMask(valueindex)) {
-                    Log("D2: MultipleLines - removing %d from cell at (r=%d c=%d)", valueindex, cell->_rowIndex, cell->_colIndex);
-                    reducecount++;
-                    CombinedDump();
-                }
-            }
-        }
-    }
-
-    return reducecount;
 }
 
 int SudokuBoard::DoCandidateLines(uint16_t mask, CellSet *square, CellSet *set) {
@@ -217,7 +144,11 @@ int SudokuBoard::CandidateLines(CellSet *square) {
         if (wMaskedOut != 0) {
             Cell *refcell = square->_set[r*3];
             CellSet *row = refcell->_row;
-            count += DoCandidateLines(wMaskedOut, square, row);
+            int changed = DoCandidateLines(wMaskedOut, square, row);
+            if (changed > 0) {
+                numCandidateLines++;
+            }
+            count += changed;
         }
     }
 
@@ -229,11 +160,95 @@ int SudokuBoard::CandidateLines(CellSet *square) {
         if (wMaskedOut != 0) {
             Cell *refcell = square->_set[c];
             CellSet *col = refcell->_column;
-            count += DoCandidateLines(wMaskedOut, square, col);
+            int changed = DoCandidateLines(wMaskedOut, square, col);
+            if (changed > 0) {
+                numCandidateLines++;
+            }
+            count += changed;
         }
     }
 
     return count;
+}
+
+
+int SudokuBoard::MultipleLines(CellSet *set) {
+
+    bool placed[10] = {0};
+    Cell *cell = NULL;
+    Cell *comparecell = NULL;
+    bool fCanDoMultipleLines;
+    int reducecount = 0;
+    
+    for (int cellindex = 0; cellindex < 9; cellindex++) {
+        int value = set->_set[cellindex]->_value;
+        placed[value] = true;  // value[0] is irrelevant
+    }
+
+    for (int valueindex = 1; valueindex <= 9; valueindex++) {
+        fCanDoMultipleLines = true;
+        comparecell = NULL;
+
+        if (placed[valueindex] == true) {
+            continue;
+        }
+
+        // look at all the cells in this set that have index in the candidate list.   If all the cells of this set appear
+        // in the same box, we can do boxline reduction
+
+        for (uint16_t cellindex = 0; cellindex < 9; cellindex++) {
+            cell = set->_set[cellindex];
+
+            if (cell->_value != 0) {
+                continue;
+            }
+
+            if (cell->IsOkToSetValue(valueindex)) {
+                // we found a cell that contains a missing value for this set it it's candidate list
+                if (comparecell == NULL) {
+                    comparecell = cell;
+                }
+                else {
+                    if (comparecell->_square != cell->_square) {
+                        // "index" appears in m_bitmask in cells across different boxes - time to skip
+                        fCanDoMultipleLines = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        cell = NULL;
+        if (comparecell && fCanDoMultipleLines) {
+            bool progress = false;
+            CellSet *square = comparecell->_square;
+
+            // iterate over all the cells in the square that don't belong to "set" (row/column)
+            for (uint16_t cellindex = 0; cellindex < 9; cellindex++) {
+                cell = square->_set[cellindex];
+                if  ((cell->_row == set) || (cell->_column == set)) {
+                    continue;
+                }
+
+                assert(cell != comparecell);
+
+                assert(cell->_value != valueindex);
+
+                // another cell in the same square that doesn't belong to "set", remove valueindex from the bitmask
+                if (cell->ClearValueFromMask(valueindex)) {
+                    Log("D2: MultipleLines - removing %d from cell at (r=%d c=%d)", valueindex, cell->_rowIndex, cell->_colIndex);
+                    reducecount++;
+                    CombinedDump();
+                    progress = true;
+                }
+            }
+            if (progress == true) {
+                numMultipleLines++;
+            }
+        }
+    }
+
+    return reducecount;
 }
 
 // Naked Pair
@@ -301,6 +316,9 @@ int SudokuBoard::NakedPair(Cell *cell, CellSet *set) {
                 progress = true;
             }
         }
+    }
+    if (progress == true) {
+        numNakedPair++;
     }
 
     return progress ? 1 : 0;
@@ -398,6 +416,9 @@ int SudokuBoard::NakedTriple(Cell *cell, CellSet *set) {
             }
         }
     }
+    if (progress == true) {
+        numNakedTriple++;
+    }
 
     return progress ? 1 : 0;
 }
@@ -467,11 +488,13 @@ int SudokuBoard::DoXWingSets(CellSet *sets) {
             }
         }
     }
+    if (changecount > 0) {
+        numXWing++;
+    }
 
     return changecount;
 }
 
-// 
 bool SudokuBoard::XWing_FindColumnIndices(CellSet *row, int value, int &col1, int &col2) {
     col1 = -1;
     col2 = -1;

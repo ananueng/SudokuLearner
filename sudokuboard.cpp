@@ -118,10 +118,8 @@ bool SudokuBoard::Solve() {
     std::string oldstate, state;
     state = GetBoardState();
 
-    Log("\n");
-    Log("Starting scans number - %d", scancount);
+    Log("\nStarting scans number - %d\n", scancount);
     CombinedDump();
-    Log("\n");
 
     while(true) {
         oldstate = state;
@@ -129,10 +127,8 @@ bool SudokuBoard::Solve() {
         scancount++;
         state = GetBoardState();
 
-        Log("\n");
-        Log("Starting scans number - %d", scancount);
+        Log("\nStarting scans number - %d", scancount);
         // CombinedDump();
-        Log("\n");
 
         if (state == oldstate)
             break;
@@ -144,7 +140,7 @@ bool SudokuBoard::Solve() {
         }
     }
 
-    Log("Number of scans - %d", scancount);
+    Log("Total number of scans - %d", scancount);
     if (fSolved) {
         Log("Board has been solved");
     }
@@ -152,9 +148,16 @@ bool SudokuBoard::Solve() {
         Log("Board has not been solved");
         Log("");
     }
-
     bool fValid = IsValid();
     Log("%sBoard is%s valid", fValid?"":"WARNING - ", fValid?"":" NOT");
+    Log("\nNumber of times LastCandidate was used: %d", numLastCandidate);
+    Log("Number of times SingleCandidate was used: %d", numSingleCandidate);
+    Log("Number of times CandidateLines was used: %d", numCandidateLines);
+    Log("Number of times MultipleLines was used: %d", numMultipleLines);
+    Log("Number of times NakedPair was used: %d", numNakedPair);
+    Log("Number of times NakedTriple was used: %d", numNakedTriple);
+    Log("Number of times XWing was used: %d", numXWing);
+
 
     return fSolved;
 }
@@ -307,12 +310,19 @@ void SudokuBoard::ScanForSolution() {
 
     if (progress == false) {
         // attempt moderate techniques
+        for (int index = 0; index < 9; index++) {
+            if (CandidateLines(&m_squares[index]) != 0) {return;}
+        }
+
+        for (int index = 0; index < 9; index++) {
+            if (MultipleLines(&m_rows[index]) != 0) {return;}
+            if (MultipleLines(&m_cols[index]) != 0) {return;}
+        }
+
         for (int r = 0; r < 9; r++) {
             for (int c = 0; c < 9; c++) {
                 Cell *cell = &m_board[r][c];
-                // TODO: PointingPair/Triple (or Candidate Lines)
                 // TODO: Double Pairs
-                // TODO: Multiple Lines
                 // Naked is roughly same as hidden, ignore for now
                 if (NakedPair(cell, cell->_square) != 0) {return;}
                 if (NakedPair(cell, cell->_row) != 0) {return;}
@@ -323,17 +333,6 @@ void SudokuBoard::ScanForSolution() {
                 if (NakedTriple(cell, cell->_column) != 0) {return;}
             }
         }
-        
-        for (int index = 0; index < 9; index++) {
-            if (CandidateLines(&m_squares[index]) != 0) {return;}
-        }
-
-        for (int index = 0; index < 9; index++) {
-            if (MultipleLines(&m_rows[index]) != 0) {return;}
-            if (MultipleLines(&m_cols[index]) != 0) {return;}
-        }
-        
-
 
         // attempt advanced techniques
         // CombinedDump();
