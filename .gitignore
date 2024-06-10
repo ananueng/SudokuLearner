@@ -1,2 +1,4 @@
 output/
 notes.txt
+formulation.txt
+*.o
