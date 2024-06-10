@@ -1,5 +1,5 @@
 output/
 notes.txt
-formulation.txt
+formulation.ltx
 *.o
 .vscode/
