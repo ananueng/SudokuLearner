@@ -80,14 +80,17 @@ int SudokuBoard::SingleCandidate(Cell *cell, CellSet *set) {
 
 int SudokuBoard::DoCandidateLines(uint16_t mask, CellSet *square, CellSet *set) {
     // Remove all the values of "mask" from "set" that are not in "square"
+    // set is in the alligned candidates
 
     int value;
     int count = 0;
     
     value = Cell::GetCellValueFromBitmaskAndClear(mask);
     while (value != 0) {
+        // for each cell in set
         for (int index = 0; index < 9; index++) {
             Cell *cell = set->_set[index];
+            // if not in the same subgrid and not filled, conditional 1?
             if ((cell->_square != square) && (cell->_value == 0)) {
                 if (cell->IsOkToSetValue(value)) {
                     Log("D2: CandidateLines - removing %d from cell at (r=%d c=%d)", value, cell->_rowIndex, cell->_colIndex);
@@ -112,9 +115,11 @@ int SudokuBoard::CandidateLines(CellSet *square) {
     uint16_t wMaskRow;
     uint16_t wMaskCol;
 
+    // for each row in a subgrid, get the triplet
     for (int r = 0; r < 3; r++) {
         wMaskRow = 0;
         for (int c = 0; c < 3; c++) {
+            // {0,1,2}, {3,4,5} {6,7,8}
             Cell *cell = square->_set[r*3+c];
             if (cell->_value == 0) {
                 wMaskRow |= cell->_bitmask;
@@ -123,9 +128,11 @@ int SudokuBoard::CandidateLines(CellSet *square) {
         maskPerRow[r] = wMaskRow;
     }
 
+    // for each col in a subgrid, get the triplet
     for (int c = 0; c < 3; c++) {
         wMaskCol = 0;
         for (int r = 0; r < 3; r++) {
+            // {0,3,6}, {1,4,7}, {2,5,8}
             Cell *cell = square->_set[r*3+c];
             if (cell->_value == 0) {
                 wMaskCol |= cell->_bitmask;
@@ -142,6 +149,7 @@ int SudokuBoard::CandidateLines(CellSet *square) {
         wMaskedOut = (maskPerRow[rx[r][0]] & ~(maskPerRow[rx[r][1]] | maskPerRow[rx[r][2]]));
 
         if (wMaskedOut != 0) {
+            // this tech applies
             Cell *refcell = square->_set[r*3];
             CellSet *row = refcell->_row;
             int changed = DoCandidateLines(wMaskedOut, square, row);

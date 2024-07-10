@@ -8,18 +8,28 @@ set -Eeuo pipefail
 usage() {
   echo "Usage: $0 (all|fs|test (n)|debug (n)|clean)"
 }
-if [ $# -ne 1 ]; then
+
+if [ $# -gt 2 ]; then
   usage
   exit
 fi
 
-make clean
-make
+case $1 in
+  "solve")
+    make clean
+    make solver
+    current_time=$(date +"%m-%d_%I:%M_%p")
+    output_folder="output/$current_time"
+    mkdir -p "$output_folder"
+    # log="$output_folder/log.tsv"
+    cp ./$2.txt $output_folder/$2.in
+    ./solver $2.txt > $output_folder/$2.out
+    ;;
+  "app")
+    
+    ;;
+esac
 
-current_time=$(date +"%m-%d_%I:%M_%p")
-output_folder="output/$current_time"
-mkdir -p "$output_folder"
-# log="$output_folder/log.tsv"
-cp ./$1.txt $output_folder/$1.in
-./solver $1.txt > $output_folder/$1.out
+
+
 
